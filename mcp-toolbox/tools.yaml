@@ -157,7 +157,6 @@ tools:
       FROM users
       WHERE email = $1;
 
-
 toolsets:
    trip_planner_mvp_tools:
     - search-hotels-by-name
