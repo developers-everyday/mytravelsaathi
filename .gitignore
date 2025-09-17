@@ -1,0 +1,40 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Environment files
+.env
+.envrc
+
+# Logs
+*.log
+
+# VSCode / Cloud Shell
+.vscode/
+.codeoss/
+.cache/
+.local/
+.docker/
+.gemini/
+.rustup/
+.npm/
+.lesshst
+.bash_history
+.viminfo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+
+# Ignore toolbox binary
+mcp-toolbox/toolbox

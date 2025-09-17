@@ -1,0 +1,170 @@
+sources:
+  my-cloud-sql-source:
+    kind: cloud-sql-postgres
+    project: mytravelsaathi-472115
+    region: us-central1
+    instance: hoteldb-instance
+    database: postgres
+    user: postgres
+    password: "postgres"
+  my-bigquery-source:
+    kind: bigquery
+    project: mytravelsaathi-472115
+    location: US
+    # credentials: /path/to/service-account.json  # optional if using default auth    
+
+tools:
+  search-hotels-by-name:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Search for hotels based on name.
+    parameters:
+      - name: name
+        type: string
+        description: The name of the hotel.
+    statement: SELECT * FROM hotels WHERE name ILIKE '%' || $1 || '%';
+  search-hotels-by-location:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Search for hotels based on location.  Result is sorted by price from least to most expensive.
+    parameters:
+      - name: location
+        type: string
+        description: The location of the hotel.
+    statement: |
+      SELECT *
+      FROM hotels
+      WHERE location ILIKE '%' || $1 || '%'
+      ORDER BY
+        CASE price_tier
+          WHEN 'Midscale' THEN 1
+          WHEN 'Upper Midscale' THEN 2
+          WHEN 'Upscale' THEN 3
+          WHEN 'Upper Upscale' THEN 4
+          WHEN 'Luxury' THEN 5
+          ELSE 99 -- Handle any unexpected values, place them at the end
+        END;
+
+  book-hotel:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Insert a new booking record into Cloud SQL.
+    parameters:
+      - name: user_id
+        type: string
+        description: The ID of the user making the booking.
+      - name: hotel_id
+        type: string
+        description: The ID of the hotel to book.
+      - name: check_in
+        type: string
+        description: Check-in date.
+      - name: check_out
+        type: string
+        description: Check-out date.
+      - name: guests
+        type: integer
+        description: Number of guests.
+    statement: |
+      INSERT INTO bookings (user_id, hotel_id, check_in, check_out, guests, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING booking_id;
+
+  list-bookings:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: List all bookings for a specific user, including hotel details.
+    parameters:
+      - name: user_id
+        type: string
+        description: The UUID of the user whose bookings should be listed.
+    statement: |
+      SELECT 
+        b.booking_id,
+        u.name AS user_name,
+        u.email AS user_email,
+        h.name AS hotel_name,
+        h.location,
+        h.price_tier,
+        b.check_in,
+        b.check_out,
+        b.guests,
+        b.created_at
+      FROM bookings b
+      JOIN users u ON b.user_id = u.user_id::TEXT
+      JOIN hotels h ON b.hotel_id = h.id
+      WHERE b.user_id = $1
+      ORDER BY b.created_at DESC;
+
+  search-hotels-by-traveler-type:
+    kind: bigquery-sql
+    source: my-bigquery-source
+    description: Search for hotels in BigQuery based on traveler type (family vs couple).
+    parameters:
+      - name: traveler_type
+        type: string
+        description: The type of traveler "family" or "couple".
+    statement: |
+      SELECT hotel_id, name, location, avg_price_per_night, rating
+      FROM `trip_planner.hotels`
+      WHERE
+        (@traveler_type = 'family' AND (kid_friendly = TRUE OR kitchen_attached = TRUE))
+        OR (@traveler_type = 'couple' AND romantic = TRUE)
+      ORDER BY rating DESC;
+
+  create-user:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Create a new user in the users table.
+    parameters:
+      - name: name
+        type: string
+        description: Full name of the user.
+      - name: email
+        type: string
+        description: Email address of the user.
+      - name: phone
+        type: string
+        description: Phone number of the user.
+    statement: |
+      INSERT INTO users (name, email, phone, created_at)
+      VALUES ($1, $2, $3, NOW())
+      RETURNING user_id::text;
+
+  search-user-by-name:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Search for a user by their full name.
+    parameters:
+      - name: name
+        type: string
+        description: The full or partial name of the user.
+    statement: |
+      SELECT user_id::text, name, email, phone, created_at
+      FROM users
+      WHERE name ILIKE '%' || $1 || '%';
+
+  search-user-by-email:
+    kind: postgres-sql
+    source: my-cloud-sql-source
+    description: Search for a user by their email address.
+    parameters:
+      - name: email
+        type: string
+        description: The email of the user.
+    statement: |
+      SELECT user_id::text, name, email, phone, created_at
+      FROM users
+      WHERE email = $1;
+
+
+toolsets:
+   trip_planner_mvp_tools:
+    - search-hotels-by-name
+    - search-hotels-by-location
+    - search-hotels-by-traveler-type
+    - book-hotel
+    - list-bookings
+    - create-user
+    - search-user-by-name
+    - search-user-by-email
