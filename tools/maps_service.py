@@ -47,6 +47,14 @@ def places_search(req: PlacesSearchRequest):
 
     return {"results": results}
 
+# get the Api Key
+@app.get("/debug-key")
+def debug_key():
+    return {
+        "has_key": bool(API_KEY),
+        "key_length": len(API_KEY) if API_KEY else 0
+    }
+
 # ----------------------------
 # Run with python maps_service.py
 # ----------------------------
