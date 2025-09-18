@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 import requests, os
 
 app = FastAPI()
@@ -12,12 +14,15 @@ class Location(BaseModel):
 
 class PlacesSearchRequest(BaseModel):
     query: str
+    query: str = Field(..., example="restaurants in Mountain View")
 
 @app.post("/places-search")
 def places_search(req: PlacesSearchRequest):
     if not API_KEY:
         return {"error": "GOOGLE_MAPS_KEY not set"}
+        raise HTTPException(status_code=500, detail="GOOGLE_MAPS_KEY not set on the server.")
 
+    # Using the newer Places API (v1) endpoint
     url = "https://places.googleapis.com/v1/places:searchText"
     headers = {
         "Content-Type": "application/json",
@@ -42,4 +47,12 @@ def places_search(req: PlacesSearchRequest):
 
     return {"results": results}
 
-
+# ----------------------------
+# Run with python maps_service.py
+# ----------------------------
+if __name__ == "__main__":
+    import uvicorn
+    # Use the PORT environment variable provided by Cloud Run, default to 8080
+    port = int(os.environ.get("PORT", 8080))
+    # Listen on all network interfaces
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,0 +1,20 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build', 
+    '--file', 'tools/Dockerfile',
+    '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/mytravelsaathi-repo/maps-service:latest', 
+    './tools'
+  ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/mytravelsaathi-repo/maps-service:latest']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: [
+    'run', 'deploy', 'maps-service',
+    '--image', 'us-central1-docker.pkg.dev/$PROJECT_ID/mytravelsaathi-repo/maps-service:latest',
+    '--region', 'us-central1',
+    '--platform', 'managed',
+    '--allow-unauthenticated',
+    '--set-secrets=GOOGLE_MAPS_KEY=maps-api-key:latest'
+  ]
