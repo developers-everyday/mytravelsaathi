@@ -1,0 +1,14 @@
+steps:
+# Deploy MCP Toolbox from public container image
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - toolbox
+    - --image=us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
+    - --service-account=toolbox-identity
+    - --region=us-central1
+    - --allow-unauthenticated
+    - --set-secrets=/app/tools.yaml=tools:latest
+    - --args=--tools_file=/app/tools.yaml,--address=0.0.0.0,--port=8080
