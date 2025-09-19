@@ -50,11 +50,4 @@
   animation: spin 1s linear infinite;
 }
 
-/* Gradient backgrounds */
-.bg-gradient-travel {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.bg-gradient-chat {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
+/* Gradient backgrounds - Using Tailwind utilities instead */

@@ -24,7 +24,7 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-travel': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'gradient-travel': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
         'gradient-chat': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       },
       animation: {

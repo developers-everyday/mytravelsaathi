@@ -42,8 +42,18 @@ const HomePage: React.FC = () => {
       <section className="text-center py-20">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Your Personal
-            <span className="bg-gradient-travel bg-clip-text text-transparent"> Travel Saathi</span>
+            Your Personal{' '}
+            <span 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+              style={{
+                backgroundImage: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              Travel Saathi
+            </span>
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             AI-powered travel assistant that helps you plan, book, and manage your perfect trip.
