@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Travel Saathi - Service Monitor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            color: #7f8c8d;
+            margin: 10px 0 0 0;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .service-card {
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .service-card.healthy {
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+        .service-card.unhealthy {
+            border-color: #e74c3c;
+            background: #fadbd8;
+        }
+        .service-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .service-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-healthy {
+            background: #27ae60;
+            color: white;
+        }
+        .status-unhealthy {
+            background: #e74c3c;
+            color: white;
+        }
+        .service-url {
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #3498db;
+            word-break: break-all;
+        }
+        .service-metrics {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 20px 0;
+            transition: background 0.3s ease;
+        }
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+        .last-updated {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .test-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .test-btn {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+        .test-btn:hover {
+            background: #d35400;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .test-result.success {
+            background: #d5f4e6;
+            border: 1px solid #27ae60;
+        }
+        .test-result.error {
+            background: #fadbd8;
+            border: 1px solid #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧳 My Travel Saathi</h1>
+            <p>Service Monitoring Dashboard</p>
+        </div>
+
+        <button class="refresh-btn" onclick="checkAllServices()">🔄 Refresh Status</button>
+
+        <div class="services-grid">
+            <div class="service-card" id="fastapi-card">
+                <div class="service-name">🚀 Travel Saathi Agent (FastAPI)</div>
+                <div class="service-status" id="fastapi-status">Checking...</div>
+                <div class="service-url" id="fastapi-url">https://travel-saathi-agent-fastapi-345761725129.us-central1.run.app</div>
+                <div class="service-metrics" id="fastapi-metrics"></div>
+            </div>
+
+            <div class="service-card" id="flask-card">
+                <div class="service-name">🌐 Travel Saathi Agent (Flask)</div>
+                <div class="service-status" id="flask-status">Checking...</div>
+                <div class="service-url" id="flask-url">https://travel-saathi-agent-flask-345761725129.us-central1.run.app</div>
+                <div class="service-metrics" id="flask-metrics"></div>
+            </div>
+
+            <div class="service-card" id="toolbox-card">
+                <div class="service-name">🔧 MCP Toolbox</div>
+                <div class="service-status" id="toolbox-status">Checking...</div>
+                <div class="service-url" id="toolbox-url">https://toolbox-345761725129.us-central1.run.app</div>
+                <div class="service-metrics" id="toolbox-metrics"></div>
+            </div>
+
+            <div class="service-card" id="maps-card">
+                <div class="service-name">🗺️ Maps Service</div>
+                <div class="service-status" id="maps-status">Checking...</div>
+                <div class="service-url" id="maps-url">https://maps-service-345761725129.us-central1.run.app</div>
+                <div class="service-metrics" id="maps-metrics"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Quick API Tests</h3>
+            <button class="test-btn" onclick="testHealth()">Health Check</button>
+            <button class="test-btn" onclick="testChat()">Test Chat</button>
+            <button class="test-btn" onclick="testInfo()">Agent Info</button>
+            <button class="test-btn" onclick="testStreaming()">Test Streaming</button>
+            
+            <div class="test-result" id="test-result" style="display: none;"></div>
+        </div>
+
+        <div class="last-updated" id="last-updated">
+            Last updated: Never
+        </div>
+    </div>
+
+    <script>
+        const services = {
+            fastapi: {
+                url: 'https://travel-saathi-agent-fastapi-345761725129.us-central1.run.app',
+                name: 'FastAPI Agent'
+            },
+            flask: {
+                url: 'https://travel-saathi-agent-flask-345761725129.us-central1.run.app',
+                name: 'Flask Agent'
+            },
+            toolbox: {
+                url: 'https://toolbox-345761725129.us-central1.run.app',
+                name: 'MCP Toolbox'
+            },
+            maps: {
+                url: 'https://maps-service-345761725129.us-central1.run.app',
+                name: 'Maps Service'
+            }
+        };
+
+        async function checkService(serviceKey, service) {
+            const card = document.getElementById(`${serviceKey}-card`);
+            const status = document.getElementById(`${serviceKey}-status`);
+            const metrics = document.getElementById(`${serviceKey}-metrics`);
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${service.url}/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                if (response.ok) {
+                    card.className = 'service-card healthy';
+                    status.textContent = 'Healthy';
+                    status.className = 'service-status status-healthy';
+                    metrics.textContent = `Response time: ${responseTime}ms | Status: ${response.status}`;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                card.className = 'service-card unhealthy';
+                status.textContent = 'Unhealthy';
+                status.className = 'service-status status-unhealthy';
+                metrics.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function checkAllServices() {
+            for (const [key, service] of Object.entries(services)) {
+                await checkService(key, service);
+            }
+            document.getElementById('last-updated').textContent = 
+                `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        async function testHealth() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing health endpoints...';
+            result.className = 'test-result';
+            
+            try {
+                const response = await fetch(`${services.fastapi.url}/health`);
+                const data = await response.json();
+                result.textContent = `✅ Health Check Successful:\n${JSON.stringify(data, null, 2)}`;
+                result.className = 'test-result success';
+            } catch (error) {
+                result.textContent = `❌ Health Check Failed:\n${error.message}`;
+                result.className = 'test-result error';
+            }
+        }
+
+        async function testChat() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing chat endpoint...';
+            result.className = 'test-result';
+            
+            try {
+                const response = await fetch(`${services.fastapi.url}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Hello! Can you help me plan a trip?'
+                    })
+                });
+                const data = await response.json();
+                result.textContent = `✅ Chat Test Successful:\n${JSON.stringify(data, null, 2)}`;
+                result.className = 'test-result success';
+            } catch (error) {
+                result.textContent = `❌ Chat Test Failed:\n${error.message}`;
+                result.className = 'test-result error';
+            }
+        }
+
+        async function testInfo() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing info endpoint...';
+            result.className = 'test-result';
+            
+            try {
+                const response = await fetch(`${services.fastapi.url}/info`);
+                const data = await response.json();
+                result.textContent = `✅ Info Test Successful:\n${JSON.stringify(data, null, 2)}`;
+                result.className = 'test-result success';
+            } catch (error) {
+                result.textContent = `❌ Info Test Failed:\n${error.message}`;
+                result.className = 'test-result error';
+            }
+        }
+
+        async function testStreaming() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.textContent = 'Testing streaming endpoint...';
+            result.className = 'test-result';
+            
+            try {
+                const response = await fetch(`${services.fastapi.url}/chat/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Tell me about travel planning'
+                    })
+                });
+                
+                const reader = response.body.getReader();
+                let streamData = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = new TextDecoder().decode(value);
+                    streamData += chunk;
+                }
+                
+                result.textContent = `✅ Streaming Test Successful:\n${streamData}`;
+                result.className = 'test-result success';
+            } catch (error) {
+                result.textContent = `❌ Streaming Test Failed:\n${error.message}`;
+                result.className = 'test-result error';
+            }
+        }
+
+        // Initial check when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAllServices();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(checkAllServices, 30000);
+        });
+    </script>
+</body>
+</html>
