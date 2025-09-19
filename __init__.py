@@ -1,1 +1,1 @@
-from my_agents.hotel_agent_app.agent import root_agent
+from my_agents.main_agent.agent import root_agent

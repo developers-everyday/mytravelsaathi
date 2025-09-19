@@ -6,7 +6,7 @@ export GOOGLE_CLOUD_PROJECT="mytravelsaathi-472115"
 export GOOGLE_CLOUD_LOCATION="us-central1"
 
 # Agent App Config
-export AGENT_PATH="my_agents/hotel_agent_app/"
+export AGENT_PATH="my_agents/main_agent/"
 export SERVICE_NAME="hotels-service"
 export APP_NAME="hotels-app"
 
