@@ -13,14 +13,15 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.6.0",
+    "clsx": "^2.0.0",
+    "firebase": "^10.7.0",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.8.0",
-    "firebase": "^10.7.0",
-    "axios": "^1.6.0",
-    "lucide-react": "^0.294.0",
-    "react-hot-toast": "^2.4.1",
-    "clsx": "^2.0.0",
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {

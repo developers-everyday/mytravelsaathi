@@ -29,5 +29,32 @@ service cloud.firestore {
     match /travel_preferences/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    
+    // Travel plans - users can only access their own plans
+    match /travelPlans/{planId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         request.auth.uid == planId.split('_')[0]);
+    }
+    
+    // Travel expenses - users can only access expenses for their plans
+    match /travelExpenses/{expenseId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.planId.split('_')[0];
+    }
+    
+    // Travel recommendations - public read, authenticated write
+    match /travelRecommendations/{recId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // User reviews - authenticated users can read, only author can write
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         !exists(/databases/$(database)/documents/reviews/$(reviewId)));
+    }
   }
 }

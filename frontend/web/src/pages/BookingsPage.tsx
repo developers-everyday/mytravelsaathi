@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, MapPin, Users, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users } from 'lucide-react';
 
 const BookingsPage: React.FC = () => {
   // Mock booking data

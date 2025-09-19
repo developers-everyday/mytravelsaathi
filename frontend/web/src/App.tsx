@@ -1,8 +1,7 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './services/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -12,10 +11,10 @@ import DashboardPage from './pages/DashboardPage';
 import ChatPage from './pages/ChatPage';
 import ProfilePage from './pages/ProfilePage';
 import BookingsPage from './pages/BookingsPage';
+import TravelPlannerPage from './pages/TravelPlannerPage';
 
 // Components
 import Navbar from './components/Navbar';
-import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
   return (
@@ -50,6 +49,11 @@ function App() {
               <Route path="/bookings" element={
                 <ProtectedRoute>
                   <BookingsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/travel-planner" element={
+                <ProtectedRoute>
+                  <TravelPlannerPage />
                 </ProtectedRoute>
               } />
             </Routes>

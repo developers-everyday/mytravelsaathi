@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../services/AuthContext';
-import { User, Mail, Phone, MapPin, Settings } from 'lucide-react';
+import { User, MapPin, Settings } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
   const { currentUser, userProfile } = useAuth();

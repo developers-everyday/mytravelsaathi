@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
-import { Menu, X, User, LogOut, Plane, MessageSquare, Calendar, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Plane, MessageSquare, Calendar, MapPin } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
 
 const Navbar: React.FC = () => {
@@ -24,6 +24,7 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Plane },
+    { path: '/travel-planner', label: 'Travel Planner', icon: MapPin },
     { path: '/chat', label: 'Chat', icon: MessageSquare },
     { path: '/bookings', label: 'Bookings', icon: Calendar },
     { path: '/profile', label: 'Profile', icon: User },

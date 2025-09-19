@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
+import React, { createContext, useContext, useState } from 'react';
 import { User, UserProfile, TravelPreferences } from '../types';
 import toast from 'react-hot-toast';
 
 interface AuthContextType {
   currentUser: User | null;
+  user: User | null; // Alias for currentUser for compatibility
   userProfile: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Login with email and password (mock)
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (_email: string, _password: string): Promise<void> => {
     setLoading(true);
     try {
       // Simulate API call
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Register with email and password (mock)
-  const register = async (email: string, password: string, name: string): Promise<void> => {
+  const register = async (email: string, _password: string, name: string): Promise<void> => {
     setLoading(true);
     try {
       // Simulate API call
@@ -151,6 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     currentUser,
+    user: currentUser, // Alias for compatibility
     userProfile,
     loading,
     login,

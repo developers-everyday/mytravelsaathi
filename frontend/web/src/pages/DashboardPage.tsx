@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
-import { Plane, MessageSquare, Calendar, User, TrendingUp, Clock } from 'lucide-react';
+import { Plane, MessageSquare, Calendar, User, TrendingUp } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
