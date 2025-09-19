@@ -1,0 +1,6 @@
+google-adk
+toolbox-core
+requests
+fastapi
+uvicorn[standard]
+pydantic

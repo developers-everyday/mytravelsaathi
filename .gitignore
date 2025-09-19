@@ -3,6 +3,8 @@
 venv/
 ENV/
 env/
+fastapi_env/
+*_env/
 
 # Python
 __pycache__/
@@ -10,10 +12,15 @@ __pycache__/
 *.pyo
 *.pyd
 *.egg-info/
+*.egg
+dist/
+build/
 
 # Environment files
 .env
 .envrc
+.env.local
+.env.production
 
 # Logs
 *.log
@@ -38,3 +45,30 @@ Thumbs.db
 
 # Ignore toolbox binary
 mcp-toolbox/toolbox
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Temporary files
+*.tmp
+*.temp
+temp-*
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE and editor files
+.idea/
+*.sublime-*
+.atom/
+.brackets.json
+
+# Docker
+.dockerignore
+
+# Cloud deployment
+.gcloud/
+gcloud-*
