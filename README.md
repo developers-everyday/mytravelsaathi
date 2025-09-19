@@ -1,144 +1,208 @@
-# My Travel Saathi – MVP 🧳
+# My Travel Saathi – AI Travel Assistant 🧳
 
-An **AI-powered trip planner MVP** that helps users register, search for hotels, make bookings, and review their trips — all through a conversational agent.
+An **AI-powered travel assistant** that helps users plan trips, search for hotels, make bookings, and manage their travel experiences through a conversational agent with both CLI and API interfaces.
 
-The system combines **Google Gemini**, **MCP Toolbox**, **Cloud SQL (Postgres)**, and **BigQuery**.
+The system combines **Google Gemini**, **MCP Toolbox**, **Cloud SQL (Postgres)**, **FastAPI**, and **Google Cloud Run**.
 
 ---
 
 ## 🌐 Tech Stack
 
 * **Google Gemini 2.5 Flash** → Large Language Model powering the agent
-* **MCP Toolbox** → Framework for exposing tools (SQL + BigQuery)
-* **Cloud SQL (Postgres)** → Stores users, hotels, and bookings
-* **BigQuery** → Curated hotel dataset for recommendations
 * **Google ADK (Agent Development Kit)** → For agent orchestration
+* **MCP Toolbox** → Framework for exposing tools (SQL + BigQuery)
+* **FastAPI** → High-performance API framework for agent endpoints
+* **Cloud SQL (Postgres)** → Stores users, hotels, and bookings
+* **Google Cloud Run** → Serverless deployment platform
+* **BigQuery** → Curated hotel dataset for recommendations
 
 ---
 
 ## 📂 Project Structure
 
 ```
-.
-├── mcp-toolbox/
-│   └── tools.yaml              # MCP tool definitions (Cloud SQL + BigQuery)
-├── my-agents/
-│   └── hotel-agent-app/
-│       ├── agent.py            # Agent definition
-│       └── __init__.py
-├── cloudSql.txt                 # Cloud SQL setup commands
-├── README-cloudshell.txt        # Cloud Shell helper commands
-└── README.md                    # Project documentation
+mytravelsaathi/
+├── 🤖 my_agents/main_agent/           # Main Travel Saathi Agent
+│   ├── agent.py                       # Core agent implementation
+│   ├── server_fastapi.py             # FastAPI server for API access
+│   ├── server.py                     # Flask server (alternative)
+│   ├── deploy_fastapi.sh             # FastAPI deployment script
+│   ├── deploy_standalone_agent.sh    # Standalone agent deployment
+│   ├── Dockerfile                    # Container configuration
+│   └── requirements_fastapi.txt      # FastAPI dependencies
+├── 🗄️ database/                      # Database management
+│   ├── schemas/                      # SQL table definitions
+│   ├── sample-data/                  # Sample hotel data
+│   ├── setup/                        # Database setup scripts
+│   └── README.md                     # Database documentation
+├── 🏗️ infrastructure/                # Infrastructure setup
+│   └── gcp-setup/                    # Google Cloud setup scripts
+├── 🔧 mcp-toolbox/                   # MCP Toolbox component
+│   ├── tools.yaml                    # Tool definitions
+│   ├── cloudbuild.toolbox.yaml       # Toolbox deployment
+│   └── deployment_setup_toolbox.sh   # Toolbox setup
+├── 🗺️ tools/                         # Maps service component
+│   ├── maps_service.py               # Maps service implementation
+│   ├── cloudbuild.yaml               # Maps service deployment
+│   └── Dockerfile                    # Maps service container
+└── README.md                         # Project documentation
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Quick Start
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/<your-username>/mytravelsaathi.git
+cd mytravelsaathi
 ```
 
 ---
 
-### 2. Set up Cloud SQL (Postgres)
+### 2. Database Setup
 
-1. Create a Cloud SQL instance (`hoteldb-instance`).
-2. Run the following SQL to initialize the schema:
+#### Option A: Automated Setup (Recommended)
+```bash
+# Create Cloud SQL instance
+./infrastructure/gcp-setup/cloud-sql-setup.sh
 
-```sql
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-CREATE TABLE users (
-    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR NOT NULL,
-    email VARCHAR UNIQUE NOT NULL,
-    phone VARCHAR,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE hotels (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    location VARCHAR NOT NULL,
-    price_tier VARCHAR NOT NULL,
-    checkin_date DATE NOT NULL,
-    checkout_date DATE NOT NULL,
-    booked BIT NOT NULL
-);
-
-CREATE TABLE bookings (
-    booking_id SERIAL PRIMARY KEY,
-    user_id VARCHAR NOT NULL,
-    hotel_id INT NOT NULL,
-    check_in DATE NOT NULL,
-    check_out DATE NOT NULL,
-    guests INT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+# Setup database schema and sample data
+psql -h YOUR_INSTANCE_IP -U postgres -f database/setup/01-create-all-tables.sql
 ```
+
+#### Option B: Manual Setup
+See detailed instructions in [`database/README.md`](database/README.md)
 
 ---
 
-### 3. Configure MCP Toolbox
+### 3. Deploy Components
 
-Edit `mcp-toolbox/tools.yaml` with your project details:
-
-```yaml
-sources:
-  my-cloud-sql-source:
-    kind: cloud-sql-postgres
-    project: mytravelsaathi-472115
-    region: us-central1
-    instance: hoteldb-instance
-    database: postgres
-    user: postgres
-    password: "postgres"
-```
-
-Run Toolbox:
-
+#### Deploy MCP Toolbox
 ```bash
 cd mcp-toolbox
-./toolbox --tools-file "tools.yaml" --ui
+./deployment_setup_toolbox.sh
+```
+
+#### Deploy Maps Service
+```bash
+cd tools
+gcloud builds submit --config cloudbuild.yaml
 ```
 
 ---
 
-### 4. Run the Agent
+### 4. Run the Travel Saathi Agent
 
+#### Option A: FastAPI Server (Recommended)
 ```bash
-cd my-agents/hotel-agent-app
+cd my_agents/main_agent
+
+# Create virtual environment
+python -m venv fastapi_env
+source fastapi_env/bin/activate
+
+# Install dependencies
+pip install -r requirements_fastapi.txt
+
+# Run FastAPI server
+uvicorn server_fastapi:app --host 0.0.0.0 --port 8080 --reload
+```
+
+**API Endpoints:**
+- **Health Check**: `GET http://localhost:8080/health`
+- **Agent Info**: `GET http://localhost:8080/info`
+- **Chat**: `POST http://localhost:8080/chat`
+- **Streaming Chat**: `POST http://localhost:8080/chat/stream`
+- **API Docs**: `http://localhost:8080/docs`
+
+#### Option B: Standalone Agent
+```bash
+cd my_agents/main_agent
 python agent.py
 ```
 
----
+#### Option C: Deploy to Cloud Run
+```bash
+cd my_agents/main_agent
 
-## 🧪 Example Agentic Flow
+# Deploy FastAPI version
+./deploy_fastapi.sh
 
-**User:** Hi, I want to plan a trip.
-**Agent:** Please share your name, email, and phone to register.
-
-➡️ Calls `create-user` → stores `user_id`
-
----
-
-**User:** I’m traveling to Goa with my infant, suggest hotels under ₹4000/night.
-➡️ Calls `search-hotels-by-traveler-type` (BigQuery) → family-friendly hotels
+# Or deploy Flask version
+./deploy.sh
+```
 
 ---
 
-**User:** Book Family Haven Resort from Jan 10–15 for 2 people.
-➡️ Calls `book-hotel` (Cloud SQL) → returns booking ID
+## 🧪 Example Usage
+
+### CLI Agent Flow
+```bash
+# Start the agent
+cd my_agents/main_agent
+python agent.py
+
+# Example conversation:
+User: Hi, I want to plan a trip.
+Agent: Please share your name, email, and phone to register.
+
+User: I'm traveling to Goa with my infant, suggest hotels under ₹4000/night.
+Agent: ➡️ Calls search-hotels-by-traveler-type → family-friendly hotels
+
+User: Book Family Haven Resort from Jan 10–15 for 2 people.
+Agent: ➡️ Calls book-hotel → returns booking ID
+```
+
+### API Usage
+```bash
+# Health check
+curl -X GET http://localhost:8080/health
+
+# Chat with agent
+curl -X POST http://localhost:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hi, I want to plan a trip to Goa"}'
+
+# Streaming chat
+curl -X POST http://localhost:8080/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Suggest hotels in Goa"}'
+```
 
 ---
 
-**User:** Show me my bookings.
-➡️ Calls `list-bookings` → returns booking history
+## 🌐 Deployment Status
+
+### ✅ Currently Deployed
+- **Travel Saathi Agent (FastAPI)**: `https://travel-saathi-agent-fastapi-345761725129.us-central1.run.app`
+- **Travel Saathi Agent (Flask)**: `https://travel-saathi-agent-flask-345761725129.us-central1.run.app`
+- **MCP Toolbox**: `https://toolbox-345761725129.us-central1.run.app`
+- **Maps Service**: `https://maps-service-345761725129.us-central1.run.app`
+
+### 📊 Sample Data Available
+- **20 Swiss Hotels**: Basel, Zurich, Lucerne, Bern, Geneva
+- **20 Goa Hotels**: North and South Goa locations
+- **Price Tiers**: Luxury, Upscale, Midscale, Upper Midscale
 
 ---
 
-🚀 **You’re now ready to build and test the My Travel Saathi MVP!**
+## 🔧 API Documentation
+
+Visit the interactive API documentation:
+- **FastAPI Docs**: `http://localhost:8080/docs` (local) or deployed URL + `/docs`
+- **ReDoc**: `http://localhost:8080/redoc` (local) or deployed URL + `/redoc`
+
+---
+
+## 🚀 Ready to Use!
+
+Your **My Travel Saathi** AI travel assistant is now ready with:
+- ✅ **FastAPI endpoints** for easy integration
+- ✅ **Cloud Run deployment** for scalability
+- ✅ **Organized database** with sample data
+- ✅ **Professional project structure**
+- ✅ **Comprehensive documentation**
+
+Start planning amazing trips with your AI travel companion! 🧳✈️
