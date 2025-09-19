@@ -30,9 +30,9 @@ Transform the travel assistant into a comprehensive, AI-powered travel ecosystem
 ```
 
 #### Key Mobile Components
-- **Native Navigation**: React Navigation 6
+- **Native Navigation**: React Navigation 7 (Latest stable)
 - **State Management**: Redux Toolkit + RTK Query
-- **Offline Storage**: AsyncStorage + SQLite
+- **Offline Storage**: AsyncStorage + SQLite / WatermelonDB
 - **Push Notifications**: Firebase Cloud Messaging
 - **Camera/Gallery**: React Native Image Picker
 - **Maps**: React Native Maps
@@ -135,10 +135,10 @@ Transform the travel assistant into a comprehensive, AI-powered travel ecosystem
 ### Mobile App Stack
 ```
 📱 React Native Architecture
-├── Frontend: React Native + TypeScript
-├── State Management: Redux Toolkit
-├── Navigation: React Navigation 6
-├── UI Components: NativeBase / Tamagui
+├── Frontend: React Native 0.75+ + TypeScript
+├── State Management: Redux Toolkit + RTK Query
+├── Navigation: React Navigation 7
+├── UI Components: NativeBase / Tamagui / React Native Elements
 ├── Backend Sync: Firebase + Custom APIs
 ├── Offline Storage: AsyncStorage + WatermelonDB
 ├── Push Notifications: Firebase FCM
@@ -277,11 +277,12 @@ Transform the travel assistant into a comprehensive, AI-powered travel ecosystem
 ## 🛠️ **Development Tools & Services**
 
 ### **Mobile Development**
-- **React Native CLI**: Latest stable version
+- **React Native CLI**: 0.75+ (Latest stable)
 - **Expo**: For rapid prototyping and testing
 - **Flipper**: Debugging and development tools
 - **CodePush**: Over-the-air updates
 - **Sentry**: Crash reporting and monitoring
+- **Metro**: React Native bundler
 
 ### **AI/ML Services**
 - **OpenAI API**: GPT-4 for advanced chat
