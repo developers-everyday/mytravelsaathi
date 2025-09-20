@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Saathi - ADK Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .config {
+            padding: 20px;
+            border-bottom: 1px solid #e5e5e5;
+            background: #f8f9fa;
+        }
+        .config input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        .chat-container {
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafafa;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        .agent-message {
+            background: white;
+            border: 1px solid #e5e5e5;
+        }
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+        .input-area button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        .input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px 20px;
+            background: #e8f5e8;
+            border-bottom: 1px solid #e5e5e5;
+            font-size: 14px;
+            color: #2d5a2d;
+        }
+        .error {
+            background: #ffeaea;
+            color: #d32f2f;
+        }
+        .quick-actions {
+            padding: 10px 20px;
+            background: #f0f8ff;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .quick-actions button {
+            margin: 5px;
+            padding: 6px 12px;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .quick-actions button:hover {
+            background: #bbdefb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧳 Travel Saathi - ADK Integration Test</h1>
+            <p>Direct integration with Google ADK API Server</p>
+        </div>
+        
+        <div class="config">
+            <h3>Configuration</h3>
+            <input type="text" id="apiUrl" placeholder="API Base URL" value="http://localhost:8082">
+            <input type="text" id="userId" placeholder="User ID" value="test_user">
+        </div>
+        
+        <div id="status" class="status">Ready to connect...</div>
+        
+        <div class="quick-actions">
+            <button onclick="sendQuickMessage('Find hotels in Goa')">Hotels in Goa</button>
+            <button onclick="sendQuickMessage('Show me luxury hotels in Paris')">Luxury Paris Hotels</button>
+            <button onclick="sendQuickMessage('Register me as John Doe, john@example.com, +1234567890')">Register User</button>
+            <button onclick="sendQuickMessage('Show my bookings')">My Bookings</button>
+            <button onclick="sendQuickMessage('Find restaurants near me')">Find Restaurants</button>
+        </div>
+        
+        <div class="chat-container">
+            <div id="messages" class="messages">
+                <div class="message agent-message">
+                    <strong>Travel Saathi:</strong> Hello! I'm your Travel Saathi 🧳. I can help you with hotel bookings, travel planning, and finding great places to visit. How can I assist you today?
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Ask about hotels, bookings, or travel..." onkeypress="handleKeyPress(event)">
+                <button id="sendButton" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TravelSaathiAPI {
+            constructor(baseURL, userId) {
+                this.baseURL = baseURL;
+                this.userId = userId;
+                this.sessionId = null;
+            }
+
+            async createSession() {
+                try {
+                    const response = await fetch(`${this.baseURL}/apps/main_agent/users/${this.userId}/sessions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create session: ${response.statusText}`);
+                    }
+
+                    const sessionData = await response.json();
+                    this.sessionId = sessionData.id;
+                    return sessionData;
+                } catch (error) {
+                    console.error('Error creating session:', error);
+                    throw error;
+                }
+            }
+
+            async sendMessage(message, onChunk, onComplete, onError) {
+                if (!this.sessionId) {
+                    try {
+                        await this.createSession();
+                    } catch (error) {
+                        onError(error);
+                        return;
+                    }
+                }
+
+                try {
+                    const response = await fetch(`${this.baseURL}/run_sse`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            appName: 'main_agent',
+                            userId: this.userId,
+                            sessionId: this.sessionId,
+                            newMessage: {
+                                parts: [{ text: message }],
+                                role: 'user'
+                            },
+                            streaming: true
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to send message: ${response.statusText}`);
+                    }
+
+                    const reader = response.body?.getReader();
+                    if (!reader) {
+                        throw new Error('No response body reader available');
+                    }
+
+                    const decoder = new TextDecoder();
+                    let fullResponse = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    
+                                    if (data.content?.parts?.[0]?.text) {
+                                        const textChunk = data.content.parts[0].text;
+                                        fullResponse += textChunk;
+                                        onChunk(textChunk);
+                                    }
+
+                                    if (data.finishReason === 'STOP') {
+                                        onComplete(fullResponse);
+                                        return;
+                                    }
+                                } catch (parseError) {
+                                    console.warn('Failed to parse streaming data:', parseError);
+                                }
+                            }
+                        }
+                    }
+
+                    onComplete(fullResponse);
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    onError(error);
+                }
+            }
+
+            async healthCheck() {
+                try {
+                    const response = await fetch(`${this.baseURL}/list-apps`);
+                    return response.ok;
+                } catch (error) {
+                    console.error('Health check failed:', error);
+                    return false;
+                }
+            }
+        }
+
+        let api = null;
+        let isConnected = false;
+
+        async function initializeAPI() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const userId = document.getElementById('userId').value;
+            
+            api = new TravelSaathiAPI(apiUrl, userId);
+            
+            try {
+                const isHealthy = await api.healthCheck();
+                isConnected = isHealthy;
+                updateStatus(isHealthy ? 'Connected to Travel Saathi service' : 'Failed to connect to service', isHealthy);
+            } catch (error) {
+                isConnected = false;
+                updateStatus('Connection error: ' + error.message, false);
+            }
+        }
+
+        function updateStatus(message, isSuccess) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = isSuccess ? 'status' : 'status error';
+        }
+
+        function addMessage(text, isUser = false) {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${isUser ? 'user-message' : 'agent-message'}`;
+            messageEl.innerHTML = `<strong>${isUser ? 'You' : 'Travel Saathi'}:</strong> ${text}`;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function addStreamingMessage() {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.id = 'streaming-message';
+            messageEl.className = 'message agent-message';
+            messageEl.innerHTML = '<strong>Travel Saathi:</strong> <span id="streaming-text"></span><span class="typing-indicator">...</span>';
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return messageEl;
+        }
+
+        function updateStreamingMessage(text) {
+            const streamingText = document.getElementById('streaming-text');
+            if (streamingText) {
+                streamingText.textContent = text;
+            }
+        }
+
+        function completeStreamingMessage(text) {
+            const streamingMessage = document.getElementById('streaming-message');
+            if (streamingMessage) {
+                streamingMessage.innerHTML = `<strong>Travel Saathi:</strong> ${text}`;
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !api || !isConnected) return;
+
+            addMessage(message, true);
+            input.value = '';
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+
+            const streamingMessage = addStreamingMessage();
+            let fullResponse = '';
+
+            try {
+                await api.sendMessage(
+                    message,
+                    (chunk) => {
+                        fullResponse += chunk;
+                        updateStreamingMessage(fullResponse);
+                    },
+                    (completeResponse) => {
+                        completeStreamingMessage(completeResponse);
+                        sendButton.disabled = false;
+                        sendButton.textContent = 'Send';
+                    },
+                    (error) => {
+                        console.error('Chat error:', error);
+                        updateStatus('Error: ' + error.message, false);
+                        streamingMessage.remove();
+                        sendButton.disabled = false;
+                        sendButton.textContent = 'Send';
+                    }
+                );
+            } catch (error) {
+                console.error('Failed to send message:', error);
+                updateStatus('Failed to send message: ' + error.message, false);
+                streamingMessage.remove();
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+            }
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Initialize on page load
+        document.getElementById('apiUrl').addEventListener('change', initializeAPI);
+        document.getElementById('userId').addEventListener('change', initializeAPI);
+        
+        // Initialize on page load
+        window.addEventListener('load', initializeAPI);
+    </script>
+</body>
+</html>

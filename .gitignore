@@ -51,6 +51,10 @@ test_*.py
 *_test.py
 tests/
 
+# Development tools (keep for team use)
+# cors-proxy.js - Development CORS proxy (committed for team use)
+# test-integration.js - Integration test scripts (committed for team use)
+
 # Temporary files
 *.tmp
 *.temp

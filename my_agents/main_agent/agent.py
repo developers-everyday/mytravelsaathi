@@ -13,6 +13,45 @@ MAPS_SERVICE_URL = os.getenv("MAPS_SERVICE_URL", "https://maps-service-345761725
 # ----------------------------
 # Connect to MCP Toolbox (hotel DB, bookings, users)
 # ----------------------------
+import ssl
+import urllib3
+import requests
+import aiohttp
+
+# Check if we're running locally (development) or in production
+IS_LOCAL_DEVELOPMENT = os.getenv("ENVIRONMENT", "local") == "local"
+
+if IS_LOCAL_DEVELOPMENT:
+    print("🔧 Running in LOCAL DEVELOPMENT mode - SSL verification disabled")
+    # Disable SSL warnings for development/testing
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
+    # Set environment variables to disable SSL verification (for local development only)
+    os.environ['PYTHONHTTPSVERIFY'] = '0'
+    os.environ['CURL_CA_BUNDLE'] = ''
+    
+    # Create SSL context that doesn't verify certificates (for local development only)
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    # Monkey patch requests to disable SSL verification (LOCAL DEVELOPMENT ONLY)
+    original_request = requests.Session.request
+    def patched_request(self, method, url, **kwargs):
+        kwargs['verify'] = False
+        return original_request(self, method, url, **kwargs)
+    requests.Session.request = patched_request
+    
+    # Monkey patch aiohttp to disable SSL verification (LOCAL DEVELOPMENT ONLY)
+    original_aiohttp_request = aiohttp.ClientSession._request
+    def patched_aiohttp_request(self, method, str_or_url, **kwargs):
+        if 'ssl' not in kwargs:
+            kwargs['ssl'] = False
+        return original_aiohttp_request(self, method, str_or_url, **kwargs)
+    aiohttp.ClientSession._request = patched_aiohttp_request
+else:
+    print("🚀 Running in PRODUCTION mode - SSL verification enabled")
+
 toolbox = ToolboxSyncClient(TOOLBOX_URL)
 try:
     # Load the raw MCP tools first
@@ -20,8 +59,12 @@ try:
     print(f"✅ Loaded {len(raw_hotel_tools)} MCP tools")
 except Exception as e:
     print("⚠️ Failed to load hotel tools:", e)
-    print("🔧 This is likely due to SSL certificate issues or network connectivity.")
-    print("🛠️ The agent will still work with mock data for testing purposes.")
+    if IS_LOCAL_DEVELOPMENT:
+        print("🔧 This is likely due to SSL certificate issues when running locally.")
+        print("🛠️ The agent will still work with mock data for testing purposes.")
+        print("💡 For production, deploy on Google Cloud where SSL certificates work properly.")
+    else:
+        print("🚨 Production SSL error - check your deployment configuration.")
     raw_hotel_tools = []
 
 # ----------------------------

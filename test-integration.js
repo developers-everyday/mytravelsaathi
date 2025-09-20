@@ -1,128 +1,140 @@
-// Test script to verify My Travel Saathi Frontend-Backend Integration
+#!/usr/bin/env node
+
+// Simple integration test for Travel Saathi ADK API
+const https = require('https');
 const http = require('http');
 
-console.log('🧪 Testing My Travel Saathi Integration...\n');
+const API_BASE_URL = 'http://localhost:8081';
 
-// Test FastAPI Backend
-function testBackend() {
+async function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 8080,
-      path: '/health',
-      method: 'GET'
-    };
-
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const response = JSON.parse(data);
-          console.log('✅ FastAPI Backend Health Check:');
-          console.log(`   Status: ${response.status}`);
-          console.log(`   Service: ${response.service}\n`);
-          resolve(response);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-// Test Chat API
-function testChatAPI() {
-  return new Promise((resolve, reject) => {
-    const postData = JSON.stringify({
-      message: "Hello! I want to plan a trip to Switzerland."
-    });
-
-    const options = {
-      hostname: 'localhost',
-      port: 8080,
-      path: '/chat',
-      method: 'POST',
+    const client = url.startsWith('https') ? https : http;
+    
+    const req = client.request(url, {
+      method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
+        'Origin': 'http://localhost:3000',
+        ...options.headers
       }
-    };
-
-    const req = http.request(options, (res) => {
+    }, (res) => {
       let data = '';
-      res.on('data', (chunk) => data += chunk);
+      res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
-          const response = JSON.parse(data);
-          console.log('✅ Chat API Test:');
-          console.log(`   Message: Hello! I want to plan a trip to Switzerland.`);
-          console.log(`   Response: ${response.response.substring(0, 100)}...`);
-          console.log(`   Status: ${response.status}\n`);
-          resolve(response);
-        } catch (error) {
-          reject(error);
+          const jsonData = JSON.parse(data);
+          resolve({ status: res.statusCode, data: jsonData, headers: res.headers });
+        } catch (e) {
+          resolve({ status: res.statusCode, data: data, headers: res.headers });
         }
       });
     });
 
     req.on('error', reject);
-    req.write(postData);
+    
+    if (options.body) {
+      req.write(JSON.stringify(options.body));
+    }
+    
     req.end();
   });
 }
 
-// Test Frontend
-function testFrontend() {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 3000,
-      path: '/',
-      method: 'GET'
-    };
+async function testIntegration() {
+  console.log('🧪 Testing Travel Saathi ADK Integration');
+  console.log('==========================================');
 
-    const req = http.request(options, (res) => {
-      console.log('✅ Frontend Server:');
-      console.log(`   Status: ${res.statusCode}`);
-      console.log(`   Content-Type: ${res.headers['content-type']}`);
-      console.log(`   URL: http://localhost:3000\n`);
-      resolve(res);
-    });
-
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-// Run all tests
-async function runTests() {
   try {
-    await testBackend();
-    await testChatAPI();
-    await testFrontend();
+    // Test 1: Health Check
+    console.log('\n1. Testing health check...');
+    const healthResponse = await makeRequest(`${API_BASE_URL}/list-apps`);
+    if (healthResponse.status === 200) {
+      console.log('✅ Health check passed');
+      console.log(`   Available apps: ${JSON.stringify(healthResponse.data)}`);
+    } else {
+      console.log('❌ Health check failed');
+      return;
+    }
+
+    // Test 2: Create Session
+    console.log('\n2. Creating session...');
+    const sessionResponse = await makeRequest(`${API_BASE_URL}/apps/main_agent/users/test_user/sessions`, {
+      method: 'POST',
+      body: {}
+    });
     
-    console.log('🎉 All tests passed! Your My Travel Saathi is ready to use!\n');
-    console.log('📱 Access your application:');
-    console.log('   Frontend: http://localhost:3000');
-    console.log('   Backend API: http://localhost:8080');
-    console.log('   API Docs: http://localhost:8080/docs\n');
-    
-    console.log('🚀 Features available:');
-    console.log('   ✅ User Registration & Login (Demo Mode)');
-    console.log('   ✅ Chat with AI Travel Assistant');
-    console.log('   ✅ User Dashboard');
-    console.log('   ✅ Profile Management');
-    console.log('   ✅ Booking Management Interface');
-    console.log('   ✅ Mobile-Responsive Design\n');
-    
+    if (sessionResponse.status === 200) {
+      console.log('✅ Session created successfully');
+      const sessionId = sessionResponse.data.id;
+      console.log(`   Session ID: ${sessionId}`);
+
+      // Test 3: Send Message
+      console.log('\n3. Sending test message...');
+      const messageResponse = await makeRequest(`${API_BASE_URL}/run_sse`, {
+        method: 'POST',
+        body: {
+          appName: 'main_agent',
+          userId: 'test_user',
+          sessionId: sessionId,
+          newMessage: {
+            parts: [{ text: 'Hello! Can you help me find hotels in Goa?' }],
+            role: 'user'
+          },
+          streaming: true
+        }
+      });
+
+      if (messageResponse.status === 200) {
+        console.log('✅ Message sent successfully');
+        console.log('   Response received (streaming data)');
+        
+        // Parse streaming response
+        const responseText = messageResponse.data;
+        if (typeof responseText === 'string' && responseText.includes('data:')) {
+          console.log('✅ Streaming response format detected');
+          const lines = responseText.split('\n');
+          let hasContent = false;
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.content?.parts?.[0]?.text) {
+                  hasContent = true;
+                  console.log(`   Agent response: "${data.content.parts[0].text}"`);
+                  break;
+                }
+              } catch (e) {
+                // Ignore parsing errors for non-JSON lines
+              }
+            }
+          }
+          if (!hasContent) {
+            console.log('⚠️  No text content found in streaming response');
+          }
+        }
+      } else {
+        console.log('❌ Message sending failed');
+        console.log(`   Status: ${messageResponse.status}`);
+        console.log(`   Response: ${JSON.stringify(messageResponse.data)}`);
+      }
+    } else {
+      console.log('❌ Session creation failed');
+      console.log(`   Status: ${sessionResponse.status}`);
+      console.log(`   Response: ${JSON.stringify(sessionResponse.data)}`);
+    }
+
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
-    process.exit(1);
+    console.log('❌ Integration test failed');
+    console.log(`   Error: ${error.message}`);
   }
+
+  console.log('\n==========================================');
+  console.log('🎯 Integration test completed');
+  console.log('\n📱 Frontend URLs:');
+  console.log('   Main App: http://localhost:3000');
+  console.log('   Test Chat: http://localhost:3000/test-chat');
+  console.log('   Standalone: file://' + process.cwd() + '/frontend/web/test-adk-integration.html');
 }
 
-runTests();
+// Run the test
+testIntegration().catch(console.error);

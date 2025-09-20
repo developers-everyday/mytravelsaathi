@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ChatPage from './pages/ChatPage';
+import TestChatPage from './pages/TestChatPage';
 import ProfilePage from './pages/ProfilePage';
 import BookingsPage from './pages/BookingsPage';
 import TravelPlannerPage from './pages/TravelPlannerPage';
@@ -41,6 +42,7 @@ function App() {
                   <ChatPage />
                 </ProtectedRoute>
               } />
+              <Route path="/test-chat" element={<TestChatPage />} />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
