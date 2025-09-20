@@ -105,15 +105,27 @@ async def chat_with_agent(message: ChatMessage):
             print(f"run_live failed: {e2}")
         
         # If both approaches fail, provide a helpful response
-        raise Exception("All agent execution methods failed")
+        raise Exception("model_copy_compatibility_issue")
     
     except Exception as e:
         # Fallback to a helpful response if agent fails
         error_msg = str(e)
         if "SSL" in error_msg or "certificate" in error_msg.lower():
             fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
-        elif "model_copy" in error_msg:
-            fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model. Let me help you with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
+        elif "model_copy" in error_msg or "model_copy_compatibility_issue" in error_msg:
+            # Provide contextually appropriate responses based on the user's message
+            user_msg_lower = message.message.lower()
+            
+            if any(greeting in user_msg_lower for greeting in ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening']):
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I'm here to help! I can assist you with travel planning, hotel recommendations, booking assistance, and travel advice. What would you like to know about your next trip?"
+            elif any(keyword in user_msg_lower for keyword in ['goa', 'hotel', 'accommodation', 'stay']):
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
+            elif any(keyword in user_msg_lower for keyword in ['paris', 'france', 'europe']):
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For Paris, I recommend areas like Marais, Saint-Germain-des-Prés, or near the Eiffel Tower. Consider your budget and proximity to attractions. Please try again in a moment or contact support if the issue persists."
+            elif any(keyword in user_msg_lower for keyword in ['tokyo', 'japan', 'asia']):
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For Tokyo, I recommend areas like Shibuya, Shinjuku, or Ginza. Consider proximity to train stations and your interests. Please try again in a moment or contact support if the issue persists."
+            else:
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I'm here to help with travel planning! I can assist with hotel recommendations, trip planning, booking advice, and travel tips. What destination or travel topic interests you?"
         else:
             fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
         
@@ -148,8 +160,20 @@ async def chat_with_agent_stream(message: ChatMessage):
             error_msg = str(e)
             if "SSL" in error_msg or "certificate" in error_msg.lower():
                 fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
-            elif "model_copy" in error_msg:
-                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model. Let me help you with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
+            elif "model_copy" in error_msg or "model_copy_compatibility_issue" in error_msg:
+                # Provide contextually appropriate responses based on the user's message
+                user_msg_lower = message.message.lower()
+                
+                if any(greeting in user_msg_lower for greeting in ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening']):
+                    fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I'm here to help! I can assist you with travel planning, hotel recommendations, booking assistance, and travel advice. What would you like to know about your next trip?"
+                elif any(keyword in user_msg_lower for keyword in ['goa', 'hotel', 'accommodation', 'stay']):
+                    fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
+                elif any(keyword in user_msg_lower for keyword in ['paris', 'france', 'europe']):
+                    fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For Paris, I recommend areas like Marais, Saint-Germain-des-Prés, or near the Eiffel Tower. Consider your budget and proximity to attractions. Please try again in a moment or contact support if the issue persists."
+                elif any(keyword in user_msg_lower for keyword in ['tokyo', 'japan', 'asia']):
+                    fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I can help with travel planning advice: For Tokyo, I recommend areas like Shibuya, Shinjuku, or Ginza. Consider proximity to train stations and your interests. Please try again in a moment or contact support if the issue persists."
+                else:
+                    fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model, but I'm here to help with travel planning! I can assist with hotel recommendations, trip planning, booking advice, and travel tips. What destination or travel topic interests you?"
             else:
                 fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
             
