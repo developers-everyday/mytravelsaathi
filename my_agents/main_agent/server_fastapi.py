@@ -72,18 +72,30 @@ async def agent_info():
 async def chat_with_agent(message: ChatMessage):
     """Chat with the agent and get complete response"""
     try:
-        # For now, return a mock response while we fix the agent integration
-        mock_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently being set up and will be able to help you plan trips, search hotels, and book accommodations soon!"
+        # Use the actual agent to process the message
+        response_generator = root_agent.run_async(message.message)
+        
+        # Collect the complete response from the async generator
+        full_response = ""
+        async for chunk in response_generator:
+            full_response += str(chunk)
         
         return ChatResponse(
-            response=mock_response,
+            response=full_response,
             status="success"
         )
     
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Agent execution error: {str(e)}"
+        # Fallback to a helpful response if agent fails
+        error_msg = str(e)
+        if "SSL" in error_msg or "certificate" in error_msg.lower():
+            fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
+        else:
+            fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
+        
+        return ChatResponse(
+            response=fallback_response,
+            status="partial_success"
         )
 
 # ----------------------------
@@ -95,21 +107,32 @@ async def chat_with_agent_stream(message: ChatMessage):
     
     async def generate_stream():
         try:
-            # For now, return a mock streaming response
-            mock_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently being set up and will be able to help you plan trips, search hotels, and book accommodations soon!"
+            # Use the actual agent to process the message
+            response_generator = root_agent.run_async(message.message)
             
-            # Simulate streaming by sending the response in chunks
-            words = mock_response.split()
-            for i, word in enumerate(words):
-                chunk = word + " "
-                yield f"data: {json.dumps({'type': 'response', 'content': chunk})}\n\n"
-                await asyncio.sleep(0.1)  # Small delay to simulate streaming
+            # Stream the response in real-time
+            async for chunk in response_generator:
+                chunk_str = str(chunk)
+                yield f"data: {json.dumps({'type': 'response', 'content': chunk_str})}\n\n"
+                await asyncio.sleep(0.05)  # Small delay for better streaming experience
             
             yield f"data: {json.dumps({'type': 'end'})}\n\n"
             
         except Exception as e:
-            error_msg = f"Agent execution error: {str(e)}"
-            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+            # Fallback to a helpful response if agent fails
+            error_msg = str(e)
+            if "SSL" in error_msg or "certificate" in error_msg.lower():
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
+            else:
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
+            
+            # Stream the fallback response
+            words = fallback_response.split()
+            for word in words:
+                chunk = word + " "
+                yield f"data: {json.dumps({'type': 'response', 'content': chunk})}\n\n"
+                await asyncio.sleep(0.1)
+            
             yield f"data: {json.dumps({'type': 'end'})}\n\n"
     
     return StreamingResponse(

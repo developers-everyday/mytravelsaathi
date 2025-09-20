@@ -62,7 +62,7 @@ export interface AgentInfo {
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://travel-saathi-agent-fastapi-345761725129.us-central1.run.app',
+  BASE_URL: 'http://localhost:8080',
   ENDPOINTS: {
     HEALTH: '/health',
     INFO: '/info',

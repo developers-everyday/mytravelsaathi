@@ -20,6 +20,8 @@ try:
     print(f"✅ Loaded {len(raw_hotel_tools)} MCP tools")
 except Exception as e:
     print("⚠️ Failed to load hotel tools:", e)
+    print("🔧 This is likely due to SSL certificate issues or network connectivity.")
+    print("🛠️ The agent will still work with mock data for testing purposes.")
     raw_hotel_tools = []
 
 # ----------------------------
