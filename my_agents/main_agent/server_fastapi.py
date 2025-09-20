@@ -72,24 +72,48 @@ async def agent_info():
 async def chat_with_agent(message: ChatMessage):
     """Chat with the agent and get complete response"""
     try:
-        # Use the actual agent to process the message
-        response_generator = root_agent.run_async(message.message)
+        # Try multiple approaches to call the agent
         
-        # Collect the complete response from the async generator
-        full_response = ""
-        async for chunk in response_generator:
-            full_response += str(chunk)
+        # Approach 1: Try run_async
+        try:
+            response_generator = root_agent.run_async(message.message)
+            full_response = ""
+            async for chunk in response_generator:
+                full_response += str(chunk)
+            
+            if full_response.strip():
+                return ChatResponse(
+                    response=full_response,
+                    status="success"
+                )
+        except Exception as e1:
+            print(f"run_async failed: {e1}")
         
-        return ChatResponse(
-            response=full_response,
-            status="success"
-        )
+        # Approach 2: Try run_live
+        try:
+            response_generator = root_agent.run_live(message.message)
+            full_response = ""
+            async for chunk in response_generator:
+                full_response += str(chunk)
+            
+            if full_response.strip():
+                return ChatResponse(
+                    response=full_response,
+                    status="success"
+                )
+        except Exception as e2:
+            print(f"run_live failed: {e2}")
+        
+        # If both approaches fail, provide a helpful response
+        raise Exception("All agent execution methods failed")
     
     except Exception as e:
         # Fallback to a helpful response if agent fails
         error_msg = str(e)
         if "SSL" in error_msg or "certificate" in error_msg.lower():
             fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
+        elif "model_copy" in error_msg:
+            fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model. Let me help you with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
         else:
             fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
         
@@ -108,6 +132,7 @@ async def chat_with_agent_stream(message: ChatMessage):
     async def generate_stream():
         try:
             # Use the actual agent to process the message
+            # The agent's run_async method returns an async generator
             response_generator = root_agent.run_async(message.message)
             
             # Stream the response in real-time
@@ -123,6 +148,8 @@ async def chat_with_agent_stream(message: ChatMessage):
             error_msg = str(e)
             if "SSL" in error_msg or "certificate" in error_msg.lower():
                 fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently having trouble connecting to the hotel database, but I can still help you with travel planning advice. Please try again in a moment or contact support if the issue persists."
+            elif "model_copy" in error_msg:
+                fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I'm currently experiencing a compatibility issue with the AI model. Let me help you with travel planning advice: For hotels in Goa, I recommend checking popular areas like North Goa (Baga, Calangute) or South Goa (Palolem, Colva). You can also search for specific hotel names or budget ranges. Please try again in a moment or contact support if the issue persists."
             else:
                 fallback_response = f"Hello! I'm your Travel Saathi 🧳. I received your message: '{message.message}'. I encountered an issue processing your request: {error_msg}. Please try rephrasing your question or try again later."
             
